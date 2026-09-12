@@ -1,0 +1,45 @@
+# IDEs e editores
+.vscode/
+.idea/
+*.iml
+*.swp
+*.swo
+*~
+
+# Build e artefatos
+bin/
+build/
+dist/
+target/
+out/
+classes/
+*.class
+*.jar
+*.war
+*.ear
+
+# Dependências e ambientes locais
+venv/
+.env/
+.venv/
+env/
+*.egg-info/
+.eggs/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.pyre/
+
+# Logs e temporários
+*.log
+*.tmp
+*.temp
+*.bak
+*.orig
+*.rej
+
+# Resultados
+*.csv
