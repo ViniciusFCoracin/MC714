@@ -1,25 +1,3 @@
-"""
-simulation.py
---------------
-Simulador de eventos discretos de um balanceador de carga com 3 servidores
-homogêneos M/M/1 (fila FCFS ilimitada, 1 thread cada).
-
-Baseado em SimPy (biblioteca de DES).
-
-Políticas implementadas:
-    - "random"          : escolha aleatória uniforme entre os 3 servidores
-    - "round_robin"      : distribuição cíclica 1,2,3,1,2,3,...
-    - "shortest_queue"   : envia para o servidor com menor (fila + em execução)
-
-Métricas coletadas (todas considerando apenas o período pós warm-up):
-    - X    : vazão do sistema (throughput)   -> nº de conclusões / tempo útil
-    - E[R] : tempo médio de resposta (fila + serviço)
-    - E[N] : número médio de requisições no sistema (via integral no tempo)
-    - Ui   : utilização de cada servidor i (tempo ocupado / tempo útil)
-
-Autor: (preencha com o nome da dupla)
-"""
-
 import random
 import simpy
 
@@ -37,7 +15,7 @@ class Metrics:
         self.sim_time = sim_time
 
         # Tempos de resposta (fila + serviço) de cada requisição que
-        # CHEGOU depois do warm-up (assim garantimos réplicas independentes
+        # chegou depois do warm-up (assim garantimos réplicas independentes
         # do período transiente, conforme sugerido no enunciado).
         self.response_times = []
 
@@ -50,13 +28,13 @@ class Metrics:
         # os logs / dinâmica de distribuição de carga pedidos no enunciado).
         self.jobs_per_server = [0] * n_servers
 
-        # Intervalos de ocupação (busy) de cada servidor: lista de (start, end)
+        # Intervalos de ocupação de cada servidor: lista de (start, end)
         self.busy_intervals = [[] for _ in range(n_servers)]
 
         # Nº de requisições concluídas dentro do período útil (pós warm-up)
         self.completions_useful = 0
 
-    # ---- registro de eventos ----------------------------------------
+    # registro de eventos
     def register_arrival(self, t):
         self.n_events.append((t, +1))
 
@@ -71,7 +49,7 @@ class Metrics:
     def register_busy_interval(self, server_id, start, end):
         self.busy_intervals[server_id].append((start, end))
 
-    # ---- cálculo das métricas agregadas ------------------------------
+    # cálculo das métricas agregadas
     def useful_time(self):
         return self.sim_time - self.warmup
 
@@ -260,8 +238,8 @@ def run_single_replication(policy, lam, mu=1.0, n_servers=3,
 
 
 if __name__ == "__main__":
-    # Teste rápido / cheque de sanidade:
-    # com lambda pequeno, E[R] deve tender a E[S] = 1/mu = 1.0
+    # cheque de sanidade: com lambda pequeno,
+    # E[R] deve tender a E[S] = 1/mu = 1.0
     r = run_single_replication(policy="random", lam=0.1, sim_time=2000,
                                 warmup=200, seed=42, verbose=True)
     print(r)

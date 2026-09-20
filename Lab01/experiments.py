@@ -1,23 +1,3 @@
-"""
-experiments.py
---------------
-Executa a bateria de experimentos pedida no enunciado:
-
-    - lambda em {0.6, 1.2, 1.8, 2.4, 2.7}
-    - políticas: random, round_robin, shortest_queue   (15 configurações)
-    - 10 réplicas por configuração, com seeds diferentes
-    - sim_time = 5000, warmup = 500
-    - calcula média e IC 95% de X, E[R], E[N], U1, U2, U3
-    - roda também lambda = 3.3 (instável) e salva a série N(t) ao longo
-      do tempo para o item (f)
-
-Saídas:
-    resultados_agregados.csv  -> uma linha por (politica, lambda) com
-                                  média e IC95% de cada métrica
-    resultados_brutos.csv     -> uma linha por réplica (para conferências)
-    instabilidade_N_t.csv     -> série temporal de N(t) para lambda=3.3
-"""
-
 import csv
 import math
 import statistics
@@ -34,7 +14,7 @@ N_REPLICAS = 10
 SIM_TIME = 5000.0
 WARMUP = 500.0
 MU = 1.0
-BASE_SEED = 1000  # semente base; cada réplica usa BASE_SEED + índice
+BASE_SEED = 1000  # seed base; cada réplica usa BASE_SEED + índice
 
 
 def confidence_interval_95(values):
@@ -78,14 +58,14 @@ def run_all_experiments():
             print(f"[OK] policy={policy:15s} lambda={lam}  "
                   f"E[R]={agg_row['E[R]_mean']:.4f} +- {agg_row['E[R]_ci95']:.4f}")
 
-    # ---- salva CSVs ----------------------------------------------------
-    with open("resultados_brutos.csv", "w", newline="") as f:
+    # salva os CSVs
+    with open("resultados/resultados_brutos.csv", "w", newline="") as f:
         fieldnames = list(raw_rows[0].keys())
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(raw_rows)
 
-    with open("resultados_agregados.csv", "w", newline="") as f:
+    with open("resultados/resultados_agregados.csv", "w", newline="") as f:
         fieldnames = list(agg_rows[0].keys())
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
@@ -124,7 +104,7 @@ def run_instability_experiment(lam=3.3, mu=MU, sim_time=1000.0, seed=42,
     env.process(sampler(env, servers, samples, sample_dt))
     env.run(until=sim_time)
 
-    with open("instabilidade_N_t.csv", "w", newline="") as f:
+    with open("resultados/instabilidade_N_t.csv", "w", newline="") as f:
         writer = csv.writer(f)
         writer.writerow(["t", "N_simulado"])
         writer.writerows(samples)
