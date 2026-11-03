@@ -1,0 +1,5 @@
+# O código dos nós usa apenas a biblioteca padrão do Python (3.10+).
+# Dependências abaixo: testes, experimentos e gráficos.
+pytest>=8
+pandas>=2.0
+matplotlib>=3.7

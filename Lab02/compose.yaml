@@ -1,0 +1,40 @@
+# 5 nós lógicos (contêineres) do Bully + detector de falhas.
+# Cada nó = 1 contêiner; comunicação exclusivamente via rede (porta 7000).
+# Atenção: contêineres numa mesma máquina NÃO são domínios de falha
+# independentes (discutir no relatório).
+x-node: &node
+  build: .
+  volumes:
+    - ./logs:/logs
+  environment: &env
+    PEERS: "1=node1:7000,2=node2:7000,3=node3:7000,4=node4:7000,5=node5:7000"
+    HB_INTERVAL: "0.5"
+    HB_TIMEOUT: "2.0"
+    ELECTION_TIMEOUT: "1.0"
+    COORDINATOR_TIMEOUT: "2.0"
+    LOSS: "0.0"
+    DELAY_MS: "0"
+    SEED: "42"
+    LOG_STDOUT: "1"
+
+services:
+  node1:
+    <<: *node
+    container_name: node1
+    environment: {<<: *env, NODE_ID: "1", LOG_PATH: /logs/node_1.jsonl}
+  node2:
+    <<: *node
+    container_name: node2
+    environment: {<<: *env, NODE_ID: "2", LOG_PATH: /logs/node_2.jsonl}
+  node3:
+    <<: *node
+    container_name: node3
+    environment: {<<: *env, NODE_ID: "3", LOG_PATH: /logs/node_3.jsonl}
+  node4:
+    <<: *node
+    container_name: node4
+    environment: {<<: *env, NODE_ID: "4", LOG_PATH: /logs/node_4.jsonl}
+  node5:
+    <<: *node
+    container_name: node5
+    environment: {<<: *env, NODE_ID: "5", LOG_PATH: /logs/node_5.jsonl}
