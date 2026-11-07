@@ -22,7 +22,7 @@ Regras (resumo):
      maior que o meu, e esse líder não é suspeito, inicio eleição.
 
 Eventos registrados (JSON lines) -- base das verificações de correção:
-    boot, suspect, trust, election_start, elected, leader, stats
+    boot, suspect, trust, election_start, early_abort, elected, leader, stats
 """
 from __future__ import annotations
 
@@ -51,9 +51,15 @@ class Node:
         )
         self._got_answer = asyncio.Event()
         self._got_coord = asyncio.Event()
+        self._wake = asyncio.Event()      # ANSWER chegou ou o detector mudou
         self._election_task: asyncio.Task | None = None
         self._tasks: list[asyncio.Task] = []
         self._fh = None
+        self._fd_startup_grace = (
+            cfg.fd_startup_grace
+            if cfg.fd_startup_grace is not None
+            else cfg.startup_delay + cfg.hb_timeout
+        )
 
     # ------------------------------------------------------------------ log
     def _log(self, event: str, **fields):
@@ -101,6 +107,9 @@ class Node:
             await asyncio.sleep(self.cfg.hb_interval)
 
     async def _fd_loop(self):
+        # Os processos podem subir em ordem diferente. Sem esta janela, o
+        # detector pode suspeitar de um nó correto antes do primeiro heartbeat.
+        await asyncio.sleep(self._fd_startup_grace)
         while True:
             self.fd.check()
             await asyncio.sleep(self.cfg.hb_interval / 2)
@@ -114,6 +123,7 @@ class Node:
     # ------------------------------------------------------- callbacks do detector
     def _on_suspect(self, peer: int):
         self._log("suspect", peer=peer)
+        self._wake.set()                  # pode encerrar uma espera por ANSWER
         if peer == self.leader:
             self._set_leader(None)
             self._ensure_election()
@@ -137,6 +147,7 @@ class Node:
                 self._ensure_election()
         elif t == ANSWER:
             self._got_answer.set()
+            self._wake.set()
         elif t == COORDINATOR:
             if src > self.id:
                 self._set_leader(src)
@@ -167,16 +178,38 @@ class Node:
                 return
             for p in higher:
                 await self.transport.send(p, {"type": ELECTION})
-            try:
-                await asyncio.wait_for(self._got_answer.wait(), self.cfg.election_timeout)
-            except asyncio.TimeoutError:
-                await self._become_leader()      # nenhum maior respondeu
+            if not await self._wait_answer(higher):
+                await self._become_leader()      # nenhum maior respondeu (ou todos suspeitos)
                 return
             try:
                 await asyncio.wait_for(self._got_coord.wait(), self.cfg.coordinator_timeout)
                 return                           # um maior assumiu a liderança
             except asyncio.TimeoutError:
                 self._log("coordinator_timeout")  # o maior sumiu: tenta de novo
+
+    async def _wait_answer(self, higher) -> bool:
+        """
+        Espera um ANSWER por até election_timeout. Com fd_early_abort, desiste
+        antes se o detector passar a suspeitar de TODOS os consultados: sem isso,
+        um nó que ainda não detectou a queda (corrida de milissegundos) esperaria
+        um timeout inteiro por uma resposta que nunca virá.
+        """
+        loop = asyncio.get_running_loop()
+        end = loop.time() + self.cfg.election_timeout
+        while True:
+            if self._got_answer.is_set():
+                return True
+            if self.cfg.fd_early_abort and all(p in self.fd.suspected for p in higher):
+                self._log("early_abort")
+                return False
+            left = end - loop.time()
+            if left <= 0:
+                return False
+            self._wake.clear()
+            try:
+                await asyncio.wait_for(self._wake.wait(), left)
+            except asyncio.TimeoutError:
+                pass
 
     async def _become_leader(self):
         self._set_leader(self.id)

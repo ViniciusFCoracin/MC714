@@ -1,8 +1,14 @@
 """
 transport.py
 ------------
-Camada de comunicação: mensagens JSON (uma por linha) sobre TCP, uma conexão
-curta por mensagem, com TIMEOUTS EXPLÍCITOS (nada bloqueia indefinidamente).
+Camada de comunicação: mensagens JSON (uma por linha) sobre TCP, com UMA
+CONEXÃO PERSISTENTE por destino (reconectada quando cai) e TIMEOUTS EXPLÍCITOS
+(nada bloqueia indefinidamente).
+
+Por que persistente? Uma conexão por mensagem gera milhares de sockets em
+TIME_WAIT por minuto; no Windows isso esgota as portas efêmeras e causa
+WinError 10048 / mensagens perdidas. Com conexões persistentes o nº de sockets
+é constante (N-1 por nó).
 
 Injeção de falhas no nível da aplicação (repetível via SEED):
   * LOSS     -> descarta a mensagem antes de enviar (perda)
@@ -10,8 +16,8 @@ Injeção de falhas no nível da aplicação (repetível via SEED):
   * block    -> partição: ignora envio/recebimento com os ids bloqueados
 Crash-stop é feito matando o processo/contêiner (SIGKILL / docker kill).
 
-Modelo de canal resultante: ponto a ponto, não confiável (perdas só quando
-injetadas), sem duplicação, sem garantia de ordem quando há DELAY_MS>0.
+Modelo de canal resultante: ponto a ponto, FIFO por conexão (a menos de DELAY_MS),
+sem duplicação; perdas só quando injetadas ou ao reconectar com o destino fora do ar.
 """
 from __future__ import annotations
 
@@ -19,6 +25,14 @@ import asyncio
 import json
 import random
 from collections import Counter
+
+
+class _Out:
+    """Estado da conexão de saída para um destino."""
+    def __init__(self):
+        self.writer = None
+        self.lock = asyncio.Lock()      # serializa escritas/reconexões (FIFO)
+        self.retry_at = 0.0             # backoff após falha de conexão
 
 
 class Transport:
@@ -31,6 +45,8 @@ class Transport:
         self.blocked: set[int] = set()
         self._server = None
         self._tasks: set[asyncio.Task] = set()
+        self._out = {p: _Out() for p in cfg.peers if p != cfg.node_id}
+        self._conns: set = set()              # conexões de entrada abertas
 
     # ---------------- recepção ----------------
     async def start(self):
@@ -40,6 +56,11 @@ class Transport:
     async def stop(self):
         for t in list(self._tasks):
             t.cancel()
+        for o in self._out.values():
+            if o.writer:
+                o.writer.close()
+        for w in list(self._conns):           # como num crash: derruba as conexões
+            w.close()
         if self._server:
             self._server.close()
             try:
@@ -48,9 +69,10 @@ class Transport:
                 pass
 
     async def _handle(self, reader, writer):
+        self._conns.add(writer)
         try:
             while True:
-                line = await asyncio.wait_for(reader.readline(), 5.0)
+                line = await asyncio.wait_for(reader.readline(), 30.0)
                 if not line:
                     break
                 msg = json.loads(line)
@@ -61,9 +83,10 @@ class Transport:
                     self.dropped += 1
                     continue
                 await self.on_message(msg)
-        except (asyncio.TimeoutError, json.JSONDecodeError, ConnectionError):
+        except (asyncio.TimeoutError, json.JSONDecodeError, OSError):
             pass
         finally:
+            self._conns.discard(writer)
             writer.close()
 
     # ---------------- envio ----------------
@@ -81,12 +104,25 @@ class Transport:
     async def _deliver(self, dst, msg):
         if self.cfg.delay_ms > 0:
             await asyncio.sleep(self.rng.uniform(0, self.cfg.delay_ms) / 1000)
-        host, port = self.cfg.peers[dst]
+        out = self._out[dst]
         t = self.cfg.connect_timeout
-        try:
-            _, writer = await asyncio.wait_for(asyncio.open_connection(host, port), t)
-            writer.write(json.dumps(msg).encode() + b"\n")
-            await asyncio.wait_for(writer.drain(), t)
-            writer.close()
-        except (OSError, asyncio.TimeoutError):
-            pass  # destino fora do ar: o detector de falhas cuida disso
+        data = json.dumps(msg).encode() + b"\n"
+        loop = asyncio.get_running_loop()
+        async with out.lock:
+            if out.writer is None or out.writer.is_closing():
+                if loop.time() < out.retry_at:
+                    return                    # destino caiu há pouco: não insiste
+                host, port = self.cfg.peers[dst]
+                try:
+                    _, out.writer = await asyncio.wait_for(
+                        asyncio.open_connection(host, port), t)
+                except (OSError, asyncio.TimeoutError):
+                    out.writer = None
+                    out.retry_at = loop.time() + self.cfg.hb_interval
+                    return                    # o detector de falhas cuida disso
+            try:
+                out.writer.write(data)
+                await asyncio.wait_for(out.writer.drain(), t)
+            except (OSError, asyncio.TimeoutError):
+                out.writer.close()
+                out.writer = None

@@ -59,10 +59,12 @@ def detection_times(events, t0, crashed, alive):
     return out
 
 
-def false_suspicions(events, truly_dead=()):
-    """FD2: nº de eventos 'suspect' sobre pares que NÃO estavam mortos."""
+def false_suspicions(events, truly_dead=(), since=None):
+    """FD2: nº de suspeitas de pares vivos após um instante opcional."""
     return sum(1 for e in events
-               if e["event"] == "suspect" and e["peer"] not in truly_dead)
+               if (e["event"] == "suspect"
+                   and e["peer"] not in truly_dead
+                   and (since is None or e["ts"] >= since)))
 
 
 def total_sent(events, t0, t1, types=None):

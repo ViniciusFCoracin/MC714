@@ -1,7 +1,5 @@
 # 5 nós lógicos (contêineres) do Bully + detector de falhas.
 # Cada nó = 1 contêiner; comunicação exclusivamente via rede (porta 7000).
-# Atenção: contêineres numa mesma máquina NÃO são domínios de falha
-# independentes (discutir no relatório).
 x-node: &node
   build: .
   volumes:

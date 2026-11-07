@@ -7,10 +7,10 @@ localhost, exatamente como nos contêineres. Crash-stop = Node.stop() (sem aviso
 Executar:  python -m pytest -v tests/
 """
 import asyncio
-import socket
 import time as _t
 
 from bully.config import Config
+from bully.netutil import reserve_ports
 from bully.node import Node
 from tests import log_checks as lc
 
@@ -19,19 +19,9 @@ FAST = dict(hb_interval=0.05, hb_timeout=0.3, election_timeout=0.2,
             log_stdout=False)
 
 
-def free_ports(n):
-    socks = [socket.socket() for _ in range(n)]
-    for s in socks:
-        s.bind(("127.0.0.1", 0))
-    ports = [s.getsockname()[1] for s in socks]
-    for s in socks:
-        s.close()
-    return ports
-
-
 class Cluster:
     def __init__(self, n, **overrides):
-        ports = free_ports(n)
+        ports = reserve_ports(n)
         self.peers = {i + 1: ("127.0.0.1", ports[i]) for i in range(n)}
         self.params = {**FAST, **overrides}
         self.events: list[dict] = []
@@ -125,6 +115,27 @@ def test_crash_de_nao_lider_nao_muda_lider():
             await asyncio.sleep(1.0)
             assert set(c.leaders().values()) == {5}
             assert await all_detected(c, 0, 2)                                  # FD1 (eventual)
+        finally:
+            await c.stop_all()
+    run(scenario())
+
+
+def test_reeleicao_nao_espera_election_timeout():
+    """
+    Com election_timeout ALTO (2 s), a recuperação ainda deve levar ~hb_timeout.
+    Sem o encerramento antecipado, um nó que é consultado antes de suspeitar do
+    líder esperaria 2 s por um ANSWER que nunca virá.
+    """
+    async def scenario():
+        c = Cluster(5, election_timeout=2.0, coordinator_timeout=4.0)
+        try:
+            await c.start()
+            assert await wait_until(lambda: set(c.leaders().values()) == {5}, 12.0)
+            t0 = _t.time()
+            await c.crash(5)
+            assert await wait_until(lambda: set(c.leaders().values()) == {4}, 12.0)
+            conv = lc.convergence_time(c.events, t0, set(c.nodes), 4)
+            assert conv is not None and conv < 1.0, conv
         finally:
             await c.stop_all()
     run(scenario())

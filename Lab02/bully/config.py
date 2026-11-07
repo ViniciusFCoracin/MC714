@@ -14,7 +14,11 @@ Variáveis de ambiente reconhecidas (todas opcionais, exceto NODE_ID e PEERS):
     COORDINATOR_TIMEOUT  espera por COORDINATOR após receber ANSWER (s)
     CONNECT_TIMEOUT      timeout explícito de conexão/escrita TCP (s)
     STARTUP_DELAY        espera antes da primeira eleição (s)
+    FD_STARTUP_GRACE     janela inicial antes de habilitar suspeitas (s); por padrão,
+                         STARTUP_DELAY + HB_TIMEOUT
     USE_FD_IN_ELECTION   1/0: eleição ignora pares suspeitos (padrão 1)
+    FD_EARLY_ABORT       1/0: encerra a espera por ANSWER assim que o detector passa a
+                         suspeitar de todos os nós consultados (padrão 1)
     LOSS                 probabilidade [0,1] de descartar cada mensagem enviada
     DELAY_MS             atraso máximo (uniforme) injetado em cada envio (ms)
     SEED                 semente do RNG de falhas (reprodutibilidade)
@@ -51,7 +55,9 @@ class Config:
     coordinator_timeout: float = 2.0
     connect_timeout: float = 0.5
     startup_delay: float = 0.5
+    fd_startup_grace: float | None = None
     use_fd_in_election: bool = True
+    fd_early_abort: bool = True
     loss: float = 0.0
     delay_ms: float = 0.0
     seed: int = 0
@@ -71,7 +77,12 @@ class Config:
             coordinator_timeout=float(g("COORDINATOR_TIMEOUT", 2.0)),
             connect_timeout=float(g("CONNECT_TIMEOUT", 0.5)),
             startup_delay=float(g("STARTUP_DELAY", 0.5)),
+            fd_startup_grace=(
+                float(g("FD_STARTUP_GRACE"))
+                if g("FD_STARTUP_GRACE") else None
+            ),
             use_fd_in_election=g("USE_FD_IN_ELECTION", "1") not in ("0", "false"),
+            fd_early_abort=g("FD_EARLY_ABORT", "1") not in ("0", "false"),
             loss=float(g("LOSS", 0.0)),
             delay_ms=float(g("DELAY_MS", 0.0)),
             seed=int(g("SEED", 0)),
