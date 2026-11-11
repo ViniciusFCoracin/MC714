@@ -65297,3 +65297,8 @@
 {"ts": 1794362460.4854443, "node": 5, "event": "stats", "sent": {"HB": 7544, "COORDINATOR": 4}, "dropped": 0}
 {"ts": 1794362460.987366, "node": 5, "event": "stats", "sent": {"HB": 7548, "COORDINATOR": 4}, "dropped": 0}
 {"ts": 1794362461.4890473, "node": 5, "event": "stats", "sent": {"HB": 7552, "COORDINATOR": 4}, "dropped": 0}
+{"ts": 1794362461.990808, "node": 5, "event": "stats", "sent": {"HB": 7556, "COORDINATOR": 4}, "dropped": 0}
+{"ts": 1794362462.492162, "node": 5, "event": "stats", "sent": {"HB": 7560, "COORDINATOR": 4}, "dropped": 0}
+{"ts": 1794362462.9931166, "node": 5, "event": "stats", "sent": {"HB": 7564, "COORDINATOR": 4}, "dropped": 0}
+{"ts": 1794362463.4942966, "node": 5, "event": "stats", "sent": {"HB": 7568, "COORDINATOR": 4}, "dropped": 0}
+{"ts": 1794362463.9956489, "node": 5, "event": "stats", "sent": {"HB": 7572, "COORDINATOR": 4}, "dropped": 0}

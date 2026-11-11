@@ -55492,3 +55492,8 @@
 {"ts": 1794362460.4587023, "node": 1, "event": "stats", "sent": {"HB": 8352, "ELECTION": 4}, "dropped": 0}
 {"ts": 1794362460.9602058, "node": 1, "event": "stats", "sent": {"HB": 8356, "ELECTION": 4}, "dropped": 0}
 {"ts": 1794362461.4613454, "node": 1, "event": "stats", "sent": {"HB": 8360, "ELECTION": 4}, "dropped": 0}
+{"ts": 1794362461.9631867, "node": 1, "event": "stats", "sent": {"HB": 8364, "ELECTION": 4}, "dropped": 0}
+{"ts": 1794362462.4640973, "node": 1, "event": "stats", "sent": {"HB": 8368, "ELECTION": 4}, "dropped": 0}
+{"ts": 1794362462.965048, "node": 1, "event": "stats", "sent": {"HB": 8372, "ELECTION": 4}, "dropped": 0}
+{"ts": 1794362463.466019, "node": 1, "event": "stats", "sent": {"HB": 8376, "ELECTION": 4}, "dropped": 0}
+{"ts": 1794362463.9843218, "node": 1, "event": "stats", "sent": {"HB": 8380, "ELECTION": 4}, "dropped": 0}
