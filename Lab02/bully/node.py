@@ -61,7 +61,7 @@ class Node:
             else cfg.startup_delay + cfg.hb_timeout
         )
 
-    # ------------------------------------------------------------------ log
+    # log
     def _log(self, event: str, **fields):
         rec = {"ts": time.time(), "node": self.id, "event": event, **fields}
         line = json.dumps(rec)
@@ -73,7 +73,7 @@ class Node:
         if self.on_event:
             self.on_event(rec)
 
-    # ------------------------------------------------------------ ciclo de vida
+    # ciclo de vida
     async def start(self):
         if self.cfg.log_path:
             self._fh = open(self.cfg.log_path, "a", encoding="utf-8")
@@ -99,7 +99,7 @@ class Node:
         await asyncio.sleep(self.cfg.startup_delay)
         self._ensure_election()
 
-    # ---------------------------------------------------------- laços periódicos
+    # laços periódicos
     async def _hb_loop(self):
         while True:
             for p in self.others:
@@ -120,7 +120,7 @@ class Node:
                       dropped=self.transport.dropped)
             await asyncio.sleep(0.5)
 
-    # ------------------------------------------------------- callbacks do detector
+    # callbacks do detector
     def _on_suspect(self, peer: int):
         self._log("suspect", peer=peer)
         self._wake.set()                  # pode encerrar uma espera por ANSWER
@@ -131,7 +131,7 @@ class Node:
     def _on_trust(self, peer: int):
         self._log("trust", peer=peer)
 
-    # ------------------------------------------------------------- mensagens
+    # mensagens
     async def _on_message(self, msg: dict):
         t, src = msg["type"], msg["src"]
         if t == HB:
@@ -155,7 +155,7 @@ class Node:
             else:
                 self._ensure_election()   # um id menor se declarou líder: reafirmar
 
-    # --------------------------------------------------------------- eleição
+    # eleição
     def _set_leader(self, leader: int | None):
         if leader != self.leader:
             self.leader = leader

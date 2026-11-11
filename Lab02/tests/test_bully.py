@@ -70,7 +70,7 @@ def run(coro):
     return asyncio.run(coro)
 
 
-# ---------------------------------------------------------------- cenário normal
+# cenário normal
 def test_eleicao_inicial_escolhe_maior_id():
     async def scenario():
         c = Cluster(5)
@@ -85,7 +85,7 @@ def test_eleicao_inicial_escolhe_maior_id():
     run(scenario())
 
 
-# ------------------------------------------------------------------ cenário de falha
+# cenário de falha
 def test_crash_do_lider_dispara_reeleicao():
     async def scenario():
         c = Cluster(5)
@@ -141,7 +141,7 @@ def test_reeleicao_nao_espera_election_timeout():
     run(scenario())
 
 
-# -------------------------------------------------------------------- recuperação
+# recuperação
 def test_no_recuperado_de_maior_id_retoma_lideranca():
     async def scenario():
         c = Cluster(4)
@@ -157,7 +157,7 @@ def test_no_recuperado_de_maior_id_retoma_lideranca():
     run(scenario())
 
 
-# ------------------------------------------------------------------ perda de mensagens
+# perda de mensagens
 def test_converge_com_perda_de_10_por_cento():
     async def scenario():
         c = Cluster(5, loss=0.10, seed=7, hb_timeout_increment=0.1)
@@ -171,7 +171,7 @@ def test_converge_com_perda_de_10_por_cento():
     run(scenario())
 
 
-# ------------------------------------------------------------------------ partição
+# partição
 def test_particao_e_cura():
     async def scenario():
         c = Cluster(5)
@@ -196,7 +196,7 @@ def test_particao_e_cura():
     run(scenario())
 
 
-# ---------------------------------------------------------- detector isolado (unidade)
+# detector isolado (unidade)
 def test_detector_suspeita_e_reconfia():
     from bully.detector import HeartbeatDetector
     t = [0.0]

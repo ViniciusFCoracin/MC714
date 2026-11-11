@@ -1,5 +1,7 @@
-# 5 nós lógicos (contêineres) do Bully + detector de falhas.
+# Compose padrão com 5 nós lógicos (contêineres) do Bully + detector de falhas.
 # Cada nó = 1 contêiner; comunicação exclusivamente via rede (porta 7000).
+# Para outro N, gere um arquivo com:
+#   python experiments/generate_compose.py --nodes N --out compose.nN.yaml
 x-node: &node
   build: .
   volumes:

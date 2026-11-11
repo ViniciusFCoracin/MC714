@@ -48,7 +48,7 @@ class Transport:
         self._out = {p: _Out() for p in cfg.peers if p != cfg.node_id}
         self._conns: set = set()              # conexões de entrada abertas
 
-    # ---------------- recepção ----------------
+    # Recepção
     async def start(self):
         port = self.cfg.peers[self.cfg.node_id][1]
         self._server = await asyncio.start_server(self._handle, "0.0.0.0", port)
@@ -89,7 +89,7 @@ class Transport:
             self._conns.discard(writer)
             writer.close()
 
-    # ---------------- envio ----------------
+    # Envio
     async def send(self, dst: int, msg: dict):
         """Não bloqueia: agenda a entrega (com falhas injetadas) e retorna."""
         msg = {**msg, "src": self.cfg.node_id}

@@ -21,8 +21,9 @@ tests/
   log_checks.py  verificação das propriedades a partir dos logs .jsonl
 experiments/
   run_experiments.py  experimento automatizado (variando N) + resumo p50/p95
+  generate_compose.py gerador de Compose parametrizado por N
   plot_results.py     gráficos
-Dockerfile, compose.yaml, Makefile, requirements.txt
+Dockerfile, compose.yaml, requirements.txt
 ```
 
 ## Como executar
@@ -34,9 +35,17 @@ python -m pytest -v tests/
 python experiments/run_experiments.py --nodes 3 5 7 9 --reps 10 --out results
 python experiments/plot_results.py --in results   
 
-docker compose up --build -d    # sobe os 5 nós em contêineres
-docker compose logs -f          # acompanha os eventos de todos os nós
-docker kill node5               # crash-stop do líder atual (nó 5)
+# Compose padrão: 5 nós
+docker compose up --build -d
+docker compose logs -f
+docker kill node5               # crash-stop do líder atual
 docker start node5              # retoma o nó 5
-docker compose down -v          # derruba e remove tudo
+docker compose down -v
+
+# Compose parametrizado: escolha N >= 3
+python experiments/generate_compose.py --nodes 7 --out compose.n7.yaml
+docker compose -f compose.n7.yaml up --build -d
+docker compose -f compose.n7.yaml ps
+docker compose -f compose.n7.yaml logs -f
+docker compose -f compose.n7.yaml down -v
 ```
