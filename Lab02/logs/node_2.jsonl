@@ -55433,3 +55433,11 @@
 {"ts": 1794362405.0822403, "node": 2, "event": "stats", "sent": {"HB": 7908, "ELECTION": 3}, "dropped": 0}
 {"ts": 1794362405.5837016, "node": 2, "event": "stats", "sent": {"HB": 7912, "ELECTION": 3}, "dropped": 0}
 {"ts": 1794362406.0889275, "node": 2, "event": "stats", "sent": {"HB": 7916, "ELECTION": 3}, "dropped": 0}
+{"ts": 1794362406.608316, "node": 2, "event": "stats", "sent": {"HB": 7920, "ELECTION": 3}, "dropped": 0}
+{"ts": 1794362407.1118042, "node": 2, "event": "stats", "sent": {"HB": 7924, "ELECTION": 3}, "dropped": 0}
+{"ts": 1794362407.6125295, "node": 2, "event": "stats", "sent": {"HB": 7928, "ELECTION": 3}, "dropped": 0}
+{"ts": 1794362408.1136582, "node": 2, "event": "stats", "sent": {"HB": 7932, "ELECTION": 3}, "dropped": 0}
+{"ts": 1794362408.652009, "node": 2, "event": "stats", "sent": {"HB": 7936, "ELECTION": 3}, "dropped": 0}
+{"ts": 1794362409.1534061, "node": 2, "event": "stats", "sent": {"HB": 7940, "ELECTION": 3}, "dropped": 0}
+{"ts": 1794362409.654711, "node": 2, "event": "stats", "sent": {"HB": 7944, "ELECTION": 3}, "dropped": 0}
+{"ts": 1794362410.1599655, "node": 2, "event": "stats", "sent": {"HB": 7948, "ELECTION": 3}, "dropped": 0}
